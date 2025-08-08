@@ -1,0 +1,30 @@
+﻿@model UserLogin
+
+<div class="login-container" style="max-width: 400px; margin: auto; padding: 30px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h2 style="text-align: center; margin-bottom: 20px;">Login</h2>
+
+    <form method="post">
+        <div style="margin-bottom: 15px;">
+            <label asp-for="UserName" style="display: block; font-weight: bold;">Username</label>
+            <input asp-for="UserName" class="form-control" style="width: 100%; padding: 8px;" />
+            <span asp-validation-for="UserName" class="text-danger" style="font-size: 0.9em;"></span>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label asp-for="Password" style="display: block; font-weight: bold;">Password</label>
+            <input asp-for="Password" type="password" class="form-control" style="width: 100%; padding: 8px;" />
+            <span asp-validation-for="Password" class="text-danger" style="font-size: 0.9em;"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px;">Login</button>
+    </form>
+
+    <div style="text-align: center; margin-top: 15px;">
+        <span>New user?</span>
+        <a href="/Account/Register" style="color: #007bff;">Register here</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
