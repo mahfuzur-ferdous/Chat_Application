@@ -1,6 +1,8 @@
 ﻿using Chat_Application.Data;
+using Chat_Application.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chat_Application.Controllers
 {
@@ -15,14 +17,17 @@ namespace Chat_Application.Controllers
 
         public IActionResult Index()
         {
+            var username = User.Identity?.Name;
             var messages = _context.ChatMessages
+                .Where(m => m.Recipient == username || string.IsNullOrEmpty(m.Recipient)) 
                 .OrderBy(m => m.SentAt)
                 .ToList();
 
-            ViewBag.Username = User.Identity?.Name;
+            var role = User.IsInRole("Admin") ? "Admin" : "User";
+            ViewBag.UserRole = role;
+            ViewBag.Username = username;
 
             return View(messages);
         }
-
     }
 }

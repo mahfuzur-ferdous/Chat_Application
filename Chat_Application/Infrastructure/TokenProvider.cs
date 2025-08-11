@@ -17,13 +17,14 @@ namespace Chat_Application.Infrastructure
 
         public string GenerateToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-            new Claim(ClaimTypes.Name, user.Username)
-        };
+                new Claim(ClaimTypes.Name, user.Username!),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],

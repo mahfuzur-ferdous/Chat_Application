@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Chat_Application.Data;
 using Chat_Application.Hubs;
@@ -15,7 +16,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<TokenProvider>();
-builder.Services.AddSession();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -52,7 +52,6 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -67,11 +66,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapHub<ChatHub>("/chathub");
 

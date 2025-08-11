@@ -1,6 +1,7 @@
 ﻿using Chat_Application.Data;
 using Chat_Application.Entity;
 using Chat_Application.Infrastructure;
+using Chat_Application.Migrations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,9 +29,12 @@ namespace Chat_Application.Controllers
                 return View();
             }
 
+            bool isAdmin = await _context.Admins.AnyAsync(a => a.UserName == username);
+
             var user = new User
             {
                 Username = username,
+                Role = isAdmin ? "Admin" : "User",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
             };
 
@@ -39,6 +43,7 @@ namespace Chat_Application.Controllers
 
             return RedirectToAction("Login");
         }
+
 
         [HttpGet]
         public IActionResult Login() => View();
@@ -72,7 +77,6 @@ namespace Chat_Application.Controllers
             Response.Cookies.Delete("jwtToken");
             return RedirectToAction("Login");
         }
-
 
 
     }

@@ -1,26 +1,27 @@
 ﻿@model IEnumerable<ChatMessage>
 @{
     ViewData["Title"] = "Chat";
-    var username = ViewBag.Username as string ?? "Guest"; 
+    var username = ViewBag.Username as string ?? "Guest";
+    var role = ViewBag.UserRole as string ?? "Guest";
 }
 
-<div class="container py-4">
+<div class="container py-4" style="max-width: 720px;">
     <!-- Header with logout -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="text-primary">Welcome, @username</h4>
+        <h4 class="text-primary mb-0">Welcome, @username</h4>
         <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
             <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
         </form>
     </div>
 
     <!-- Chat Card -->
-    <div class="card shadow-lg border-0">
+    <div class="card shadow-sm border-0">
         <div class="card-header bg-primary text-white">
             <strong>Chat Room</strong>
         </div>
-        <div class="card-body p-0 d-flex flex-column" style="height: 500px;">
+        <div class="card-body d-flex flex-column" style="height: 500px;">
             <!-- Messages Area -->
-            <div id="messagesList" class="flex-grow-1 overflow-auto p-3" style="background-color: #f8f9fa;">
+            <div id="messagesList" class="flex-grow-1 overflow-auto p-3 bg-light rounded" style="border: 1px solid #ddd;">
                 @foreach (var msg in Model)
                 {
                     <div class="mb-2">
@@ -32,10 +33,17 @@
             </div>
 
             <!-- Input Area -->
-            <div class="border-top p-3 bg-light">
+            <div class="border-top mt-3 pt-3 bg-white">
                 <div class="input-group">
-                    <input type="text" id="message" class="form-control" placeholder="Type your message..." />
-                    <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    <textarea id="message" class="form-control" rows="2" placeholder="Type your message" aria-label="Message"></textarea>
+
+                    @if (role != "Admin")
+                    {
+                        <select id="userDropdown" class="form-select ms-2" aria-label="Select user" style="width: 180px;">
+                        </select>
+                    }
+
+                    <button id="sendBtn" class="btn btn-primary ms-2" onclick="sendMessage()" disabled>Send</button>
                 </div>
             </div>
         </div>
@@ -45,38 +53,71 @@
 <!-- SignalR Script -->
 <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
 <script>
-    const username = "@username"; 
+    const username = "@username";
+    const role = "@role";
 
     const connection = new signalR.HubConnectionBuilder()
         .withUrl("/chathub")
         .build();
 
-    connection.on("ReceiveMessage", function (user, message) {
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("sendBtn");
+
+    messageInput.addEventListener("input", () => {
+        sendBtn.disabled = messageInput.value.trim().length === 0;
+    });
+
+    connection.on("ReceiveMessage", function (user, message, sentAt) {
+        const time = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const msgContainer = document.createElement("div");
         msgContainer.classList.add("mb-2");
         msgContainer.innerHTML = `<span class="fw-bold text-primary">${user}</span>:
-                                   <span>${message}</span>
-                                   <small class="text-muted">(now)</small>`;
+                                  <span>${message}</span>
+                                  <small class="text-muted">(${time})</small>`;
         const messagesList = document.getElementById("messagesList");
         messagesList.appendChild(msgContainer);
 
-        // Auto-scroll to bottom
         messagesList.scrollTop = messagesList.scrollHeight;
     });
 
-    connection.start().catch(function (err) {
-        console.error(err.toString());
+    connection.start()
+        .then(() => {
+            connection.invoke("RegisterUser", username);
+        })
+        .catch(err => console.error(err.toString()));
+
+    connection.on("UserListUpdated", function(users) {
+        const dropdown = document.getElementById("userDropdown");
+        if (!dropdown) return;
+
+        dropdown.innerHTML = "";
+        users.forEach(user => {
+            if (user !== username) {
+                let option = document.createElement("option");
+                option.value = user;
+                option.text = user;
+                dropdown.add(option);
+            }
+        });
     });
 
     function sendMessage() {
-        const message = document.getElementById("message").value.trim();
-
+        const message = messageInput.value.trim();
         if (!message) return;
 
-        connection.invoke("SendMessage", username, message).catch(function (err) {
+        let recipient = role === "Admin" ? "" : document.getElementById("userDropdown").value;
+
+        connection.invoke("SendMessage", username, role, recipient, message).catch(function (err) {
             console.error(err.toString());
         });
 
-        document.getElementById("message").value = "";
+        messageInput.value = "";
+        sendBtn.disabled = true;
+        messageInput.focus();
     }
+
+    window.onload = () => {
+        const messagesList = document.getElementById("messagesList");
+        messagesList.scrollTop = messagesList.scrollHeight;
+    };
 </script>
