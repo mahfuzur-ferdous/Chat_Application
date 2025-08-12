@@ -52,6 +52,16 @@ namespace Chat_Application.Hubs
                 await Clients.Client(Context.ConnectionId)
                     .SendAsync("ReceiveMessage", msg.UserName, msg.Message, msg.CreatedAt);
 
+                var chatMessage = new ChatMessage
+                {
+                    UserName = msg.UserName,
+                    Recipient = msg.Recipient,
+                    Message = msg.Message,
+                    SentAt = msg.CreatedAt,
+                    IsRead = true
+                };
+                _context.ChatMessages.Add(chatMessage);
+
                 msg.IsRead = true;
             }
 
@@ -64,6 +74,7 @@ namespace Chat_Application.Hubs
 
             await base.OnConnectedAsync();
         }
+
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
